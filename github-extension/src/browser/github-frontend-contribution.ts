@@ -9,47 +9,39 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { injectable, inject } from "inversify";
-import { CommandContribution, CommandRegistry, MenuContribution, MenuModelRegistry } from "@theia/core/lib/common";
-import { CommonMenus } from "@theia/core/lib/browser";
-import { GithubService } from "../common/github-service";
-
-export const GetReposCommand = {
-    id: 'get-repos',
-    label: "Get-Repos"
-};
-
-export const UploadSshKeyCommand = {
-    id: 'upload-key',
-    label: "Upload-SSH-Key"
-};
+import { injectable, inject } from 'inversify';
+import { StatusBar, StatusBarAlignment } from '@theia/core/lib/browser/status-bar/status-bar';
+import { GithubService } from '../common/github-service';
+import { GitHubProperties } from './github-properties';
+import { User } from '../common/github-model';
+import { GITHUB_COMMANDS } from './github-commands';
+import { FrontendApplicationContribution, FrontendApplication } from '@theia/core/lib/browser';
 
 @injectable()
-export class GithubFrontendContribution implements CommandContribution, MenuContribution {
+export class GitHubFrontendContribution implements FrontendApplicationContribution {
 
-    constructor(@inject(GithubService) private githubService: GithubService) { }
-
-    registerCommands(registry: CommandRegistry): void {
-        registry.registerCommand(GetReposCommand, {
-            execute: () => {
-                this.githubService.getUserRepositories({ username: 'username', password: 'password' }, 'vinokurig', 2, 3);
-            }
-        });
-        registry.registerCommand(UploadSshKeyCommand, {
-            execute: () => {
-                this.githubService.uploadSshKey({ username: 'username', password: 'password' }, 'newSshKey');
-            }
+    constructor(
+        @inject(StatusBar) protected readonly statusBar: StatusBar,
+        @inject(GitHubProperties) protected readonly gitHubProperties: GitHubProperties,
+        @inject(GithubService) protected readonly gitHubService: GithubService
+    ) {
+        this.gitHubProperties.onPropertiesChange(() => {
+            this.updateStatusBar();
         });
     }
 
-    registerMenus(menus: MenuModelRegistry): void {
-        menus.registerMenuAction(CommonMenus.EDIT_FIND, {
-            commandId: GetReposCommand.id,
-            label: GetReposCommand.label
-        });
-        menus.registerMenuAction(CommonMenus.EDIT_FIND, {
-            commandId: UploadSshKeyCommand.id,
-            label: UploadSshKeyCommand.label
-        });
+    onStart(app: FrontendApplication): void {
+    }
+
+    protected updateStatusBar() {
+        this.gitHubService.getCurrentUser(this.gitHubProperties.getProperties()).then(user => this.onUserChanged(user)).catch(error => this.onUserChanged(undefined));
+    }
+
+    protected onUserChanged(user: User | undefined): void {
+        if (user) {
+            this.statusBar.setElement("github", {text: "$(github-alt) " + user.login, alignment: StatusBarAlignment.LEFT});
+        } else {
+            this.statusBar.setElement("github", {text: "$(github-alt) not authorized", alignment: StatusBarAlignment.LEFT, command: GITHUB_COMMANDS.OPEN_CONFIGURATION.id});
+        }
     }
 }

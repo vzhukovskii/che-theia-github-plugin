@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2012-2018 Red Hat, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
+
 export interface Repository {
     readonly id: number;
     readonly owner: User;
@@ -242,8 +253,13 @@ export interface Collaborator {
     readonly permissions: Permissions
 }
 
-// TODO: change to OAuth token when it will be ready.
+export interface Properties {
+    readonly credentials?: Credentials;
+}
+
 export interface Credentials {
-    readonly username: string;
-    readonly password: string;
+    readonly type?: string;
+    readonly username?: string;
+    readonly password?: string;
+    readonly token?: string;
 }

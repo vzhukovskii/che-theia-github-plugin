@@ -11,7 +11,7 @@
 
 import { injectable, inject } from "inversify";
 import { GithubService, SshKeyPair, SshKeyServer } from '../common/github-service';
-import { Repository, Credentials, User, PullRequest, Organization, Collaborator } from '../common/github-model';
+import { Repository, User, PullRequest, Organization, Collaborator, Properties } from '../common/github-model';
 
 var GitHubApi = require('github');
 
@@ -20,116 +20,114 @@ export class GithubServiceImpl implements GithubService {
 
     constructor(@inject(SshKeyServer) protected readonly sshKeyServer: SshKeyServer) { }
 
-    getRepository(credentials: Credentials, owner: string, repository: string): Promise<Repository> {
-        return this.getConnection(credentials).repos.get({ owner: owner, repo: repository }).then((result: any) => {
+    getRepository(owner: string, repository: string, properties?: Properties): Promise<Repository> {
+        return this.getConnection(properties).repos.get({ owner: owner, repo: repository }).then((result: any) => {
             return new Promise<Repository>(resolve => { resolve(result.data) })
         });
     }
 
-    getUserRepositories(credentials: Credentials, user: string, pageNumber = 0, pageSize = 0): Promise<Repository[]> {
-        return this.getConnection(credentials).repos.getForUser({ username: user, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+    getUserRepositories(user: string, pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Repository[]> {
+        return this.getConnection(properties).repos.getForUser({ username: user, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
             return new Promise<Repository[]>(resolve => { resolve(result.data) })
         });
     }
 
-    getOrganizationRepositories(credentials: Credentials, organization: string, pageNumber = 0, pageSize = 0): Promise<Repository[]> {
-        return this.getConnection(credentials).repos.getForOrg({ org: organization, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+    getOrganizationRepositories(organization: string, pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Repository[]> {
+        return this.getConnection(properties).repos.getForOrg({ org: organization, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
             return new Promise<Repository[]>(resolve => { resolve(result.data) })
         });
     }
 
-    getAllRepositories(credentials: Credentials, pageNumber = 0, pageSize = 0): Promise<Repository[]> {
-        return this.getConnection(credentials).repos.getAll({ page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+    getAllRepositories(pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Repository[]> {
+        return this.getConnection(properties).repos.getAll({ page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then(async (result: any) => {
+            return new Promise<Repository[]>(resolve => { resolve(result.data) });
+        });
+    }
+
+    getForks(owner: string, repository: string, pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Repository[]> {
+        return this.getConnection(properties).repos.getForks({ owner, repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
             return new Promise<Repository[]>(resolve => { resolve(result.data) })
         });
     }
 
-    getForks(credentials: Credentials, owner: string, repository: string, pageNumber = 0, pageSize = 0): Promise<Repository[]> {
-        return this.getConnection(credentials).repos.getForks({ owner, repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
-            return new Promise<Repository[]>(resolve => { resolve(result.data) })
-        });
-    }
-
-    createFork(credentials: Credentials, owner: string, repository: string): Promise<void> {
-        return this.getConnection(credentials).repos.fork({ owner, repository }).then((result: any) => {
+    createFork(owner: string, repository: string, properties?: Properties): Promise<void> {
+        return this.getConnection(properties).repos.fork({ owner, repository }).then((result: any) => {
             return new Promise<void>(resolve => { resolve(result.data) })
         });
     }
 
-    commentIssue(credentials: Credentials, owner: string, repository: string, id: number, comment: string): Promise<void> {
-        return this.getConnection(credentials)
-            .issues.createComment({ owner: owner, repo: repository, number: id, body: comment }).then((result: any) => {
-                return new Promise<void>(resolve => { resolve(result.data) })
-            });
-    }
-
-    getPullRequest(credentials: Credentials, owner: string, repository: string, id: number): Promise<PullRequest> {
-        return this.getConnection(credentials)
-            .pullRequests.get({ owner: owner, repo: repository, number: id }).then((result: any) => {
-                return new Promise<PullRequest>(resolve => { resolve(result.data) })
-            });
-    }
-
-    getPullRequests(credentials: Credentials, owner: string, repository: string, pageNumber = 0, pageSize = 0): Promise<PullRequest[]> {
-        return this.getConnection(credentials)
-            .pullRequests.getAll({ owner: owner, repo: repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
-                return new Promise<PullRequest[]>(resolve => { resolve(result.data) })
-            });
-    }
-
-    createPullRequest(credentials: Credentials, owner: string, repository: string, head: string, base: string, title: string): Promise<void> {
-        return this.getConnection(credentials)
-            .pullRequests.create({ owner: owner, repo: repository, head: head, base: base, title: title }).then((result: any) => {
-                return new Promise<void>(resolve => { resolve(result.data) })
-            });
-    }
-
-    updatePullRequest(credentials: Credentials, owner: string, repository: string, id: string, pullRequest: PullRequest): Promise<void> {
-        return this.getConnection(credentials).pullRequests.update({ owner: owner, repo: repository, number: id, title: pullRequest.title, body: pullRequest.body, state: pullRequest.state, base: pullRequest.base }).then((result: any) => {
+    commentIssue(owner: string, repository: string, id: number, comment: string, properties?: Properties): Promise<void> {
+        return this.getConnection(properties).issues.createComment({ owner: owner, repo: repository, number: id, body: comment }).then((result: any) => {
             return new Promise<void>(resolve => { resolve(result.data) })
         });
     }
 
-    getOrganizations(credentials: Credentials, pageNumber = 0, pageSize = 0): Promise<Organization[]> {
-        return this.getConnection(credentials).orgs.getAll({ page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+    getPullRequest(owner: string, repository: string, id: number, properties?: Properties): Promise<PullRequest> {
+        return this.getConnection(properties).pullRequests.get({ owner: owner, repo: repository, number: id }).then((result: any) => {
+            return new Promise<PullRequest>(resolve => { resolve(result.data) })
+        });
+    }
+
+    getPullRequests(owner: string, repository: string, pageNumber = 0, pageSize = 0, properties?: Properties): Promise<PullRequest[]> {
+        return this.getConnection(properties).pullRequests.getAll({ owner: owner, repo: repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+            return new Promise<PullRequest[]>(resolve => { resolve(result.data) })
+        });
+    }
+
+    createPullRequest(owner: string, repository: string, head: string, base: string, title: string, properties?: Properties): Promise<void> {
+        return this.getConnection(properties).pullRequests.create({ owner: owner, repo: repository, head: head, base: base, title: title }).then((result: any) => {
+            return new Promise<void>(resolve => { resolve(result.data) })
+        });
+    }
+
+    updatePullRequest(owner: string, repository: string, id: string, pullRequest: PullRequest, properties?: Properties): Promise<void> {
+        return this.getConnection(properties).pullRequests.update({ owner: owner, repo: repository, number: id, title: pullRequest.title, body: pullRequest.body, state: pullRequest.state, base: pullRequest.base }).then((result: any) => {
+            return new Promise<void>(resolve => { resolve(result.data) })
+        });
+    }
+
+    getOrganizations(pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Organization[]> {
+        return this.getConnection(properties).users.getOrgs({ page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
             return new Promise<Organization[]>(resolve => { resolve(result.data) })
         });
     }
 
-    getCurrentUser(credentials: Credentials): Promise<User> {
-        return this.getConnection(credentials).users.get().then((result: any) => {
+    getCurrentUser(properties?: Properties): Promise<User> {
+        return this.getConnection(properties).users.get({}).then((result: any) => {
             return new Promise<User>(resolve => { resolve(result.data) })
         });
     }
 
-    getCollaborators(credentials: Credentials, owner: string, repository: string, pageNumber = 0, pageSize = 0): Promise<Collaborator[]> {
-        return this.getConnection(credentials).repos.getCollaborators({ owner: owner, repo: repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
+    getCollaborators(owner: string, repository: string, pageNumber = 0, pageSize = 0, properties?: Properties): Promise<Collaborator[]> {
+        return this.getConnection(properties).repos.getCollaborators({ owner: owner, repo: repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize }).then((result: any) => {
             return new Promise<Collaborator[]>(resolve => { resolve(result.data) })
         });
     }
 
-    uploadSshKey(credentials: Credentials, title: string): Promise<void> {
+    uploadSshKey(title: string, properties?: Properties): Promise<void> {
         const service: string = 'vcs';
         const host: string = 'github.com';
 
         return this.sshKeyServer.get(service, host).then((SshKeyPair: SshKeyPair) => {
             if (SshKeyPair.publicKey = undefined) {
                 return this.sshKeyServer.generate(service, host).then((SshKeyPair: SshKeyPair) => {
-                    return this.getConnection(credentials).users.createKey({ title: title, key: SshKeyPair.publicKey });
+                    return this.getConnection(properties).users.createKey({ title: title, key: SshKeyPair.publicKey });
                 });
             } else {
-                return this.getConnection(credentials).users.createKey({ title: title, key: SshKeyPair.publicKey });
+                return this.getConnection(properties).users.createKey({ title: title, key: SshKeyPair.publicKey });
             }
         });
     }
 
-    protected getConnection(credentials: Credentials) {
-        let github = new GitHubApi;
-        github.authenticate({
-            type: 'basic',
-            username: credentials.username,
-            password: credentials.password
-        });
-        return github;
+    protected getConnection(properties?: Properties) {
+        if (properties) {
+            const octokit = new GitHubApi({
+                debug: true
+            });
+            octokit.authenticate(properties.credentials);
+            return octokit;
+        } else {
+            return new GitHubApi({});
+        }
     }
 }

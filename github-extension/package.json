@@ -9,7 +9,10 @@
     "src"
   ],
   "dependencies": {
-    "@theia/core": "latest"
+    "@theia/core": "latest",
+    "@theia/git": "latest",
+    "@theia/userstorage": "latest",
+    "jsonc-parser": "^1.0.1"
   },
   "devDependencies": {
     "typescript": "latest"

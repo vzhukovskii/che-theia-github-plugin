@@ -10,14 +10,21 @@
  */
 
 import { ContainerModule } from "inversify";
-import { CommandContribution, MenuContribution } from "@theia/core/lib/common";
-import { GithubFrontendContribution } from './github-frontend-contribution';
 import { GithubService, githubKeyServicePath } from '../common/github-service';
-import { WebSocketConnectionProvider } from "@theia/core/lib/browser";
+import { WebSocketConnectionProvider, FrontendApplicationContribution } from "@theia/core/lib/browser";
+import { GitHubQuickOpenService } from "./github-quick-open-service";
+import { CommandContribution } from "@theia/core";
+import { GitHubCommandHandlers } from "./github-commands";
+import { GitHubFrontendContribution } from "./github-frontend-contribution";
+import { GitHubProperties } from "./github-properties";
 
 export default new ContainerModule(bind => {
-    bind(CommandContribution).to(GithubFrontendContribution).inSingletonScope();
-    bind(MenuContribution).to(GithubFrontendContribution).inSingletonScope();
+    bind(GitHubProperties).toSelf().inSingletonScope();
+    bind(FrontendApplicationContribution).toDynamicValue(c => c.container.get(GitHubProperties));
+    bind(GitHubFrontendContribution).toSelf().inSingletonScope();
+    bind(FrontendApplicationContribution).toDynamicValue(c => c.container.get(GitHubFrontendContribution));
+    bind(CommandContribution).to(GitHubCommandHandlers);
+    bind(GitHubQuickOpenService).toSelf().inSingletonScope();
 
     bind(GithubService).toDynamicValue(ctx => {
         const provider = ctx.container.get(WebSocketConnectionProvider);
